@@ -61,33 +61,40 @@ plurk.authorize(token, token_secret)
 
 my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": sys.argv[1]})
 my_id = my_Profile["user_info"]["id"]
-#print(my_id)
-my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": 14129109, "limit": 1})
-my_friends_id = [i["id"] for i in my_friends_id]
-friends_id_list = []
+my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": str(sys.argv[2])})
+my_friends_id = [(i["id"], i["nick_name"]) for i in my_friends_id]
+friends_id_list = [(my_id, sys.argv[1])]
 for i in my_friends_id:
-    friend_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": i, "limit": 1})
-    friend_id = [j["id"] for j in friend_id]
+    friend_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": i[0], "limit": str(sys.argv[2])})
+    friend_id = [(j["id"], j["nick_name"]) for j in friend_id]
     for j in friend_id:
         friends_id_list.append(j)
-friends_content_list = {}
-print(friends_id_list)
 for i in friends_id_list:
     all_plurks = ""
-    i = sys.argv[1]
+    #i[0] = my_id
+    #i[1] = sys_argv[1]
     try:
-        about = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": i})["user_info"]["about"]
+        about = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": i[0]})["user_info"]["about"]
+        friends_about_list[i[0]] = about
     except:
         pass
     last_t = "2030-1-1T05:08:44"
-    for j in range(5):
-        plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i, "limit": 5, "offset": last_t})["plurks"]
+
+    for j in range(int(sys.argv[2])):
+        plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i[0], "offset": last_t})["plurks"]
         for k in plurks:
             all_plurks += k["content"]
             all_plurks += "\n"
+            comment = plurk.callAPI("/APP/Responses/get", options={"plurk_id": k["plurk_id"]})
+            try:
+                for l in comment["responses"]:
+                    if l["user_id"] == i[0]:
+                        all_plurks += l["content"]
+                        all_plurks += "\n"
+            except:
+                pass
             last_t = time_formating(k["posted"])
-    
-    print(strip_tags(all_plurks).encode("utf-8"))
-        #print(time_formating(j["posted"][5:26]))
-    
-    #plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i, "limit": 100})["plurks"]
+    with open(i[1]+"_about.txt", "w") as f:
+        f.write(strip_tags(about).encode("utf-8"))
+    with open(i[1]+"_content.txt", "w") as f:
+        f.write(strip_tags(all_plurks).encode("utf-8"))
