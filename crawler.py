@@ -1,8 +1,16 @@
-import sys
+from __future__ import print_function 
+import sys, re, urlparse
 import oauth2 as oauth
-import urlparse
 from plurk_oauth import PlurkAPI
 from HTMLParser import HTMLParser
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument("-u", dest="user", default="")
+parser.add_argument("-f", dest="friends_n", default=0)
+parser.add_argument("-n", dest="plurks_n", default=0)
+parser.add_argument("-k", dest="keyword", default="")
+args = parser.parse_args()
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -47,6 +55,42 @@ def time_formating(timestamp):
        month_no = 12
     return timestamp[12:16]+"-"+str(month_no)+"-"+timestamp[5:7]+"T"+timestamp[17:25]
 
+def get_friends_data(friends_list):
+    for i in friends_list:
+        all_plurks = ""
+        last_t = "2030-1-1T05:08:44"
+        try:
+            about = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": i[0]})["user_info"]["about"]
+            about = strip_tags(about)
+        except:
+            pass
+        for j in range((int(args.plurks_n)//5)+1):
+            if j == int(args.plurks_n)//5: 
+                limit = int(args.plurks_n)%5
+            else:
+                limit = 5
+            plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i[0], "limit": limit, "offset": last_t})["plurks"]
+            for k in plurks:
+                all_plurks += k["content"]
+                all_plurks += "\n"
+                comment = plurk.callAPI("/APP/Responses/get", options={"plurk_id": k["plurk_id"]})
+                try:
+                    for l in comment["responses"]:
+                        if l["user_id"] == i[0]:
+                            all_plurks += l["content"]
+                            all_plurks += "\n"
+                except:
+                    pass
+                last_t = time_formating(k["posted"])
+        tmp = all_plurks
+        all_plurks = strip_tags(all_plurks)
+        all_plurks = re.sub("\n[A-Za-z0-9_]*:", "\n", all_plurks)
+        with open(i[1]+"_about.txt", "w") as f:
+            f.write(about.encode("utf-8"))
+        with open(i[1]+"_content.txt", "w") as f:
+            f.write(all_plurks.encode("utf-8"))
+        
+
 OAUTH_REQUEST_TOKEN = "https://www.plurk.com/OAuth/request_token"
 OAUTH_kCCESS_TOKEN = "https://www.plurk.com/OAuth/access_token"
 key = "TYt8Fv77oT5p"
@@ -57,44 +101,38 @@ token_secret = "c8UjUr20XuandOzp5gIXMV1AGfc9mPsx"
 plurk = PlurkAPI(key, secret)
 plurk.authorize(token, token_secret)
 
-
-
-my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": sys.argv[1]})
+my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
 my_id = my_Profile["user_info"]["id"]
-my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": str(sys.argv[2])})
-my_friends_id = [(i["id"], i["nick_name"]) for i in my_friends_id]
-friends_id_list = [(my_id, sys.argv[1])]
-for i in my_friends_id:
-    friend_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": i[0], "limit": str(sys.argv[2])})
-    friend_id = [(j["id"], j["nick_name"]) for j in friend_id]
-    for j in friend_id:
-        friends_id_list.append(j)
-for i in friends_id_list:
-    all_plurks = ""
-    #i[0] = my_id
-    #i[1] = sys_argv[1]
-    try:
-        about = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": i[0]})["user_info"]["about"]
-        friends_about_list[i[0]] = about
-    except:
-        pass
-    last_t = "2030-1-1T05:08:44"
+friends_list = [(my_id, args.user)]
 
-    for j in range(int(sys.argv[2])):
-        plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i[0], "offset": last_t})["plurks"]
-        for k in plurks:
-            all_plurks += k["content"]
-            all_plurks += "\n"
-            comment = plurk.callAPI("/APP/Responses/get", options={"plurk_id": k["plurk_id"]})
-            try:
-                for l in comment["responses"]:
-                    if l["user_id"] == i[0]:
-                        all_plurks += l["content"]
-                        all_plurks += "\n"
-            except:
-                pass
-            last_t = time_formating(k["posted"])
-    with open(i[1]+"_about.txt", "w") as f:
-        f.write(strip_tags(about).encode("utf-8"))
-    with open(i[1]+"_content.txt", "w") as f:
-        f.write(strip_tags(all_plurks).encode("utf-8"))
+if args.user == "":
+    print("GG")
+    exit()
+
+if(args.keyword == ""):
+    if int(args.friends_n) == 0:
+        print("GG")
+        exit()
+    if int(args.plurks_n) == 0:
+        print("GG")
+        exit()
+    my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": 1})
+    my_friends_id = [(i["id"], i["nick_name"]) for i in my_friends_id]
+    friends_list = [(my_id, args.user)]
+    for i in my_friends_id:
+        friend_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": i[0], "limit": int(args.friends_n)})
+        friend_id = [(j["id"], j["nick_name"]) for j in friend_id]
+        for j in friend_id:
+            friends_list.append(j)
+    get_friends_data(friends_list)
+else:
+    if int(args.friends_n) != 0:
+        print("GG")
+        exit()
+    if int(args.plurks_n) != 0:
+        print("GG")
+        exit()
+    plurks = plurk.callAPI("/APP/PlurkSearch/search", options={"query": args.keyword})
+    for user_id, user_info in plurks["users"].iteritems():
+        friends_list.append((int(user_id), user_info["nick_name"]))
+    get_friends_data(friends_list)
