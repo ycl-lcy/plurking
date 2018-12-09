@@ -64,11 +64,11 @@ def get_friends_data(friends_list):
             about = strip_tags(about)
         except:
             pass
-        for j in range((int(args.plurks_n)//5)+1):
-            if j == int(args.plurks_n)//5: 
-                limit = int(args.plurks_n)%5
+        for j in range((int(args.plurks_n)//30)+1):
+            if j == int(args.plurks_n)//30: 
+                limit = int(args.plurks_n)%30
             else:
-                limit = 5
+                limit = 30
             plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i[0], "limit": limit, "offset": last_t})["plurks"]
             for k in plurks:
                 all_plurks += k["content"]
@@ -105,14 +105,13 @@ my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": 
 my_id = my_Profile["user_info"]["id"]
 friends_list = [(my_id, args.user)]
 
-if args.user == "":
-    print("GG")
-    exit()
-
 if(args.keyword == ""):
     if int(args.friends_n) == 0:
-        print("GG")
-        exit()
+        if int(args.plurks_n) != 0:
+            get_friends_data(friends_list)
+        else:
+            print("GG")
+            exit()
     if int(args.plurks_n) == 0:
         print("GG")
         exit()
@@ -134,5 +133,8 @@ else:
         exit()
     plurks = plurk.callAPI("/APP/PlurkSearch/search", options={"query": args.keyword})
     for user_id, user_info in plurks["users"].iteritems():
+        #if user_info["location"][-6:] == "Taiwan":
         friends_list.append((int(user_id), user_info["nick_name"]))
+        #else:
+            #pass
     get_friends_data(friends_list)
