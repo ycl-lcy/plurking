@@ -101,11 +101,10 @@ token_secret = "c8UjUr20XuandOzp5gIXMV1AGfc9mPsx"
 plurk = PlurkAPI(key, secret)
 plurk.authorize(token, token_secret)
 
-my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
-my_id = my_Profile["user_info"]["id"]
-friends_list = [(my_id, args.user)]
-
 if(args.keyword == ""):
+    my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
+    my_id = my_Profile["user_info"]["id"]
+    friends_list = [(my_id, args.user)]
     if int(args.friends_n) == 0:
         if int(args.plurks_n) != 0:
             get_friends_data(friends_list)
@@ -131,6 +130,7 @@ else:
     if int(args.plurks_n) != 0:
         print("GG")
         exit()
+    friends_list = []
     plurks = plurk.callAPI("/APP/PlurkSearch/search", options={"query": args.keyword})
     for user_id, user_info in plurks["users"].iteritems():
         #if user_info["location"][-6:] == "Taiwan":
