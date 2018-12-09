@@ -116,7 +116,7 @@ if(args.keyword == ""):
     if int(args.plurks_n) == 0:
         print("GG")
         exit()
-    my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": 1})
+    my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": 100})
     my_friends_id = [(i["id"], i["nick_name"]) for i in my_friends_id]
     friends_list = [(my_id, args.user)]
     for i in my_friends_id:
