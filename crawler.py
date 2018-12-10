@@ -95,25 +95,28 @@ OAUTH_REQUEST_TOKEN = "https://www.plurk.com/OAuth/request_token"
 OAUTH_kCCESS_TOKEN = "https://www.plurk.com/OAuth/access_token"
 key = "TYt8Fv77oT5p"
 secret = "3lzEavllllxZokBVgaEoBtcJfgZXaG3p"
-token = "5Lacy8zM8F3k"
-token_secret = "c8UjUr20XuandOzp5gIXMV1AGfc9mPsx" 
+token="PN9Y6bampFc2"
+token_secret="MRlltKMyv8z7QUEzOpmNJdK5ep0sZB56"
 
 plurk = PlurkAPI(key, secret)
 plurk.authorize(token, token_secret)
 
 if(args.keyword == ""):
-    my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
-    my_id = my_Profile["user_info"]["id"]
-    friends_list = [(my_id, args.user)]
     if int(args.friends_n) == 0:
         if int(args.plurks_n) != 0:
+            my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
+            my_id = my_Profile["user_info"]["id"]
+            friends_list = [(my_id, args.user)]
             get_friends_data(friends_list)
+            exit()
         else:
             print("GG")
             exit()
     if int(args.plurks_n) == 0:
         print("GG")
         exit()
+    my_Profile = plurk.callAPI("/APP/Profile/getPublicProfile", options={"user_id": args.user})
+    my_id = my_Profile["user_info"]["id"]
     my_friends_id = plurk.callAPI("/APP/FriendsFans/getFriendsByOffset", options={"user_id": my_id, "limit": 100})
     my_friends_id = [(i["id"], i["nick_name"]) for i in my_friends_id]
     friends_list = [(my_id, args.user)]
