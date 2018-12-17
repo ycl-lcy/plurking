@@ -71,6 +71,8 @@ def get_friends_data(friends_list):
                 limit = 30
             plurks = plurk.callAPI("/APP/Timeline/getPublicPlurks", options={"user_id": i[0], "limit": limit, "offset": last_t})["plurks"]
             for k in plurks:
+                if k["owner_id"] != i[0]:
+                    continue
                 all_plurks += k["content"]
                 all_plurks += "\n"
                 comment = plurk.callAPI("/APP/Responses/get", options={"plurk_id": k["plurk_id"]})
